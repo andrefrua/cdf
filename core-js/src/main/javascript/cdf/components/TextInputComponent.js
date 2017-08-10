@@ -1,5 +1,5 @@
 /*!
- * Copyright 2002 - 2015 Webdetails, a Pentaho company. All rights reserved.
+ * Copyright 2002 - 2017 Webdetails, a Pentaho company. All rights reserved.
  *
  * This software was developed by Webdetails and is provided under the terms
  * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -20,39 +20,83 @@ define([
   return BaseComponent.extend({
     update: function() {
       var myself = this;
-      var name = myself.name;
 
-      var selectHTML = "<input type='text' id='" + name + "' name='"  + name +
-        "' value='" + myself.dashboard.getParameterValue(myself.parameter) +
-        (myself.size ? ("' size='" + myself.size) : (myself.charWidth ? ("' size='" + myself.charWidth) : "")) +
-        (myself.maxLength ? ("' maxlength='" + myself.maxLength) : (myself.maxChars ? ("' maxlength='" + myself.maxChars) : "")) + "'>";
-      if(myself.size) {
-        Logger.warn("Attribute 'size' is deprecated");
-      }
-      if(myself.maxLength) {
-        Logger.warn("Attribute 'maxLength' is deprecated");
-      }
+      myself._addHtmlToPlaceholder();
 
-      myself.placeholder().html(selectHTML);
-
-      var el = $("#" + name);
+      var el = $("#" + myself.name);
 
       el.change(function() {
-        if(myself.dashboard.getParameterValue(myself.parameter) !== el.val()) {
-          myself.dashboard.processChange(name);
+        if (myself._isValueChanged(el)) {
+          myself.dashboard.processChange(myself.name);
         }
       }).keyup(function(ev) {
-        if(ev.keyCode == 13 && myself.dashboard.getParameterValue(myself.parameter) !== el.val()) {
-          myself.dashboard.processChange(name);
+        if ((myself.refreshOnEveryKeyUp || ev.keyCode === 13) && myself._isValueChanged(el)) {
+          myself.cursorPlace = el[0].selectionStart;
+          myself.dashboard.processChange(myself.name);
         }
       });
 
+      if (myself.addClearIcon) {
+        $("#" + myself.name + "-clear-icon").click(function() {
+          el.val("");
+          myself.dashboard.processChange(myself.name);
+        });
+      }
+
       myself._doAutoFocus();
+
+      if (myself.refreshOnEveryKeyUp) {
+        // Asynchronously reset focus in the same place
+        setTimeout(function() {
+          myself._setCursor(el[0], myself.cursorPlace);
+        }, 0);
+      }
     },
 
     getValue: function() {
       return $("#" + this.name).val();
+    },
+
+    _addHtmlToPlaceholder: function() {
+      var componentHTML = "<input" +
+        " type='text'" +
+        " id='" + this.name + "'" +
+        " name='" + this.name + "'" +
+        " value='" + this.dashboard.getParameterValue(this.parameter) +
+        (this.size ? ("' size='" + this.size) : (this.charWidth ? ("' size='" + this.charWidth) : "")) +
+        (this.maxLength ? ("' maxlength='" + this.maxLength) : (this.maxChars ? ("' maxlength='" + this.maxChars) : "")) + "'>";
+      if (this.addClearIcon) {
+        var className = "clear-icon" + (this.clearIconClassName ? " " + this.clearIconClassName : "");
+        componentHTML += "<div id='" + this.name + "-clear-icon' class='" + className + "'></div>";
+      }
+      if (this.size) {
+        Logger.warn("Attribute 'size' is deprecated");
+      }
+      if (this.maxLength) {
+        Logger.warn("Attribute 'maxLength' is deprecated");
+      }
+      this.placeholder().html(componentHTML);
+    },
+
+    _isValueChanged: function(element) {
+      return this.dashboard.getParameterValue(this.parameter) !== element.val();
+    },
+
+    _setCursor: function(node, pos) {
+      if (!node) {
+        return false;
+      } else if (node.createTextRange) {
+        var textRange = node.createTextRange();
+        textRange.collapse(true);
+        textRange.moveEnd("character", pos);
+        textRange.moveStart("character", pos);
+        textRange.select();
+        return true;
+      } else if (node.setSelectionRange) {
+        node.setSelectionRange(pos, pos);
+        return true;
+      }
+      return false;
     }
   });
-
 });
