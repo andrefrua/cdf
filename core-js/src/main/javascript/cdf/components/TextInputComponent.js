@@ -23,7 +23,7 @@ define([
 
       myself._addHtmlToPlaceholder();
 
-      var el = $("#" + myself.name);
+      var el = myself.placeholder().find("#" + myself.name);
 
       el.change(function() {
         if (myself._isValueChanged(el)) {
@@ -37,7 +37,7 @@ define([
       });
 
       if (myself.addClearIcon) {
-        $("#" + myself.name + "-clear-icon").click(function() {
+        myself.placeholder().find("#" + myself.name + "-clear-icon").click(function() {
           el.val("");
           myself.dashboard.processChange(myself.name);
         });
@@ -54,7 +54,7 @@ define([
     },
 
     getValue: function() {
-      return $("#" + this.name).val();
+      return this.placeholder().find("#" + this.name).val();
     },
 
     _addHtmlToPlaceholder: function() {

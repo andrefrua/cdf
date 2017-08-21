@@ -525,40 +525,83 @@ var SelectMultiComponent = SelectBaseComponent.extend({
 var TextInputComponent = BaseComponent.extend({
   update: function () {
     var myself = this;
-    var name = myself.name;
-    var selectHTML = "<input type='text' id='" + name + "' name='" + name +
-      "' value='" + Dashboards.getParameterValue(myself.parameter) +
-      (myself.size ? ("' size='" + myself.size) : (myself.charWidth ? ("' size='" + myself.charWidth) : "")) +
-      (myself.maxLength ? ("' maxlength='" + myself.maxLength) : (myself.maxChars ? ("' maxlength='" + myself.maxChars) : "")) + "'>";
-    if (myself.size) {
-      Dashboards.log("Warning: attribute 'size' is deprecated");
-    }
-    if (myself.maxLength) {
-      Dashboards.log("Warning: attribute 'maxLength' is deprecated");
-    }
 
-    myself.placeholder().html(selectHTML);
+    myself._addHtmlToPlaceholder();
 
-    var el = $("#" + name);
+    var el = myself.placeholder().find("#" + myself.name);
 
-    el
-      .change(function () {
-        if (Dashboards.getParameterValue(myself.parameter) !== el.val()) {
-          Dashboards.processChange(name);
-        }
-      })
-      .keyup(function (ev) {
-        if (ev.keyCode == 13 &&
-          Dashboards.getParameterValue(myself.parameter) !== el.val()) {
+    el.change(function () {
+      if (myself._isValueChanged(el)) {
+        Dashboards.processChange(myself.name);
+      }
+    }).keyup(function (ev) {
+      if ((myself.refreshOnEveryKeyUp || ev.keyCode === 13) && myself._isValueChanged(el)) {
+        myself.cursorPlace = el[0].selectionStart;
+        Dashboards.processChange(myself.name);
+      }
+    });
 
-          Dashboards.processChange(name);
-        }
+    if (myself.addClearIcon) {
+      myself.placeholder().find("#" + myself.name + "-clear-icon").click(function () {
+        el.val("");
+        Dashboards.processChange(myself.name);
       });
+    }
 
     myself._doAutoFocus();
+
+    if (myself.refreshOnEveryKeyUp) {
+      // Asynchronously reset focus in the same place
+      setTimeout(function () {
+        myself._setCursor(el[0], myself.cursorPlace);
+      }, 0);
+    }
   },
+
   getValue: function () {
-    return $("#" + this.name).val();
+    return this.placeholder().find("#" + this.name).val();
+  },
+
+  _addHtmlToPlaceholder: function () {
+    var componentHTML = "<input" +
+      " type='text'" +
+      " id='" + this.name + "'" +
+      " name='" + this.name + "'" +
+      " value='" + Dashboards.getParameterValue(this.parameter) +
+      (this.size ? ("' size='" + this.size) : (this.charWidth ? ("' size='" + this.charWidth) : "")) +
+      (this.maxLength ? ("' maxlength='" + this.maxLength) : (this.maxChars ? ("' maxlength='" + this.maxChars) : "")) + "'>";
+    if (this.addClearIcon) {
+      var className = "clear-icon" + (this.clearIconClassName ? " " + this.clearIconClassName : "");
+      componentHTML += "<div id='" + this.name + "-clear-icon' class='" + className + "'></div>";
+    }
+    if (this.size) {
+      Dashboards.log("Warning: attribute 'size' is deprecated");
+    }
+    if (this.maxLength) {
+      Dashboards.log("Warning: attribute 'maxLength' is deprecated");
+    }
+    this.placeholder().html(componentHTML);
+  },
+
+  _isValueChanged: function (element) {
+    return Dashboards.getParameterValue(this.parameter) !== element.val();
+  },
+
+  _setCursor: function (node, pos) {
+    if (!node) {
+      return false;
+    } else if (node.createTextRange) {
+      var textRange = node.createTextRange();
+      textRange.collapse(true);
+      textRange.moveEnd("character", pos);
+      textRange.moveStart("character", pos);
+      textRange.select();
+      return true;
+    } else if (node.setSelectionRange) {
+      node.setSelectionRange(pos, pos);
+      return true;
+    }
+    return false;
   }
 });
 
