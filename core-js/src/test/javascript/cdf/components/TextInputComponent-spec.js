@@ -19,7 +19,7 @@ define([
   /**
    * ## The Text Input Component
    */
-  describe("The Text Input Component #", function() {
+  fdescribe("The Text Input Component #", function() {
 
     var dashboard = new Dashboard();
     
@@ -54,6 +54,28 @@ define([
       });
 
       dashboard.update(textInputComponent);
+    });
+
+    /**
+     * Checks if process event is triggered on every key press if the property refreshOnEveryKeyUp is true
+     */
+    it("process change on each key up event", function (done) {
+      textInputComponent.refreshOnEveryKeyUp = true;
+
+      // Fetches the input element
+      var inputElement = textInputComponent.placeholder().find("#" + textInputComponent.name);
+      
+      // Creates and triggers a keyup event on the input
+      var event = $.event("keyup");
+      event.keyCode = "x";
+
+      inputElement.trigger(event);
+
+
+
+      
+
+      delete textInputComponent.refreshOnEveryKeyUp;
     });
   });
 });
