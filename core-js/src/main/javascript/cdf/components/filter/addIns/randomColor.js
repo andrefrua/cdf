@@ -12,26 +12,26 @@
  */
 
 define([
-  './Parent'
-], function (ParentView) {
+  'amd!cdf/lib/underscore',
+  './_register'
+], function(_, registerAddIn) {
 
-  "use strict";
+  'use strict';
 
-  /**
-   * @class cdf.components.filter.views.Group
-   * @amd cdf/components/filter/views/Group
-   * @extends cdf.components.filter.views.Parent
-   * @classdesc View for groups of items.
-   * @ignore
-   */
-  return ParentView.extend(/** @lends cdf.components.filter.views.Group# */{
-    /**
-     * View type.
-     *
-     * @const
-     * @type {string}
-     */
-    type: 'Group'
-  });
+  var randomColor = {
+    name: 'randomColor',
+    label: 'Programmatically sets a random color',
+    defaults: {
+      filter: '.filter-item-body'
+    },
+    implementation: function($tgt, model, options) {
+      return $tgt.find(options.filter).css({
+        color: "rgb(" + _.random(255) + "," + _.random(255) + "," + _.random(255) + ")"
+      });
+    }
+  };
 
+  registerAddIn('renderItemSelection', randomColor);
+
+  return randomColor;
 });

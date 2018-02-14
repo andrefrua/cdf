@@ -10,28 +10,37 @@
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. Please refer to
  * the license for the specific language governing your rights and limitations.
  */
-
+/**
+ * @summary Abstract handler to be used by engine implementation
+ * @description Abstract handler to be used by engine implementation
+ */
 define([
-  './Parent'
-], function (ParentView) {
+ 'cdf/lib/Base'
+],function(Base) {
 
   "use strict";
 
-  /**
-   * @class cdf.components.filter.views.Group
-   * @amd cdf/components/filter/views/Group
-   * @extends cdf.components.filter.views.Parent
-   * @classdesc View for groups of items.
-   * @ignore
-   */
-  return ParentView.extend(/** @lends cdf.components.filter.views.Group# */{
-    /**
-     * View type.
-     *
-     * @const
-     * @type {string}
-     */
-    type: 'Group'
-  });
+  return Base.extend({
+    constructor: function(view) {
+      this.view = view;
+      this._position = null;
+    },
 
-});
+    setPosition: function($element) {
+
+    },
+
+    savePosition: function(position){
+      this._position = this.view.getChildren().eq(position);
+      return this._position;
+    },
+
+    restorePosition: function() {
+      if (this._position) {
+        this.setPosition(this._position);
+        this._position = null;
+      }
+    }
+  });
+ }
+);

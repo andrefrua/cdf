@@ -12,26 +12,39 @@
  */
 
 define([
-  './Parent'
-], function (ParentView) {
+  './_register'
+], function(registerAddIn) {
 
-  "use strict";
+  'use strict';
 
-  /**
-   * @class cdf.components.filter.views.Group
-   * @amd cdf/components/filter/views/Group
-   * @extends cdf.components.filter.views.Parent
-   * @classdesc View for groups of items.
-   * @ignore
+  /*
+   * Sorts items, by keeping the insertion order
    */
-  return ParentView.extend(/** @lends cdf.components.filter.views.Group# */{
-    /**
-     * View type.
-     *
-     * @const
-     * @type {string}
-     */
-    type: 'Group'
-  });
+  var insertionOrder = {
+    name: 'insertionOrder',
+    label: 'Keep insertion order',
+    defaults: {
+      ascending: true
+    },
+    implementation: function($tgt, st, options) {
+      return function(left, right) {
+        var l = left.cid;
+        var r = right.cid;
+
+        if (l === r) {
+          return 0;
+        }
+        if (!options.ascending) {
+          return l < r ? 1 : -1;
+        }
+        return l < r ? -1 : 1;
+      };
+    }
+  };
+
+  registerAddIn('sortItem', insertionOrder);
+  registerAddIn('sortGroup', insertionOrder);
+
+  return insertionOrder;
 
 });

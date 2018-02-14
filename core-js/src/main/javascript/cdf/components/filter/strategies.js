@@ -12,26 +12,17 @@
  */
 
 define([
-  './Parent'
-], function (ParentView) {
+  './strategies/SingleSelect',
+  './strategies/MultiSelect',
+  './strategies/LimitedSelect'
+], function (SingleSelect, MultiSelect, LimitedSelect) {
 
-  "use strict";
+  'use strict';
 
-  /**
-   * @class cdf.components.filter.views.Group
-   * @amd cdf/components/filter/views/Group
-   * @extends cdf.components.filter.views.Parent
-   * @classdesc View for groups of items.
-   * @ignore
-   */
-  return ParentView.extend(/** @lends cdf.components.filter.views.Group# */{
-    /**
-     * View type.
-     *
-     * @const
-     * @type {string}
-     */
-    type: 'Group'
-  });
+  return {
+    SingleSelect: SingleSelect,
+    MultiSelect: MultiSelect,
+    LimitedSelect: LimitedSelect
+  };
 
 });

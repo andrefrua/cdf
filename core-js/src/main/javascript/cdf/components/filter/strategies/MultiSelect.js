@@ -1,5 +1,5 @@
 /*!
- * Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company. All rights reserved.
+ * Copyright 2002 - 2016 Webdetails, a Pentaho company. All rights reserved.
  *
  * This software was developed by Webdetails and is provided under the terms
  * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -12,9 +12,11 @@
  */
 
 define([
-  'amd!../../../lib/underscore',
+  'amd!cdf/lib/underscore',
   './AbstractSelect'
 ], function (_, AbstractSelect) {
+
+  'use strict';
 
   /**
    * @class cdf.components.filter.strategies.MultiSelect
@@ -25,23 +27,13 @@ define([
    */
   return AbstractSelect.extend(/** @lends cdf.components.filter.strategies.MultiSelect# */{
     /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.SelectionStrategies.MultiSelect',
-
-    /**
      * Sets a new selection state.
      *
      * @param {string} newState The new selection state.
      * @param {object} model    The target model.
-     * @return {string} The new selection state.
      */
     setSelection: function (newState, model) {
       model.setAndUpdateSelection(newState);
-      return newState;
     }
   });
 

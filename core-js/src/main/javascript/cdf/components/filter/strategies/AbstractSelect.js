@@ -1,5 +1,5 @@
 /*!
- * Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company. All rights reserved.
+ * Copyright 2002 - 2016 Webdetails, a Pentaho company. All rights reserved.
  *
  * This software was developed by Webdetails and is provided under the terms
  * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -12,26 +12,27 @@
  */
 
 define([
-  '../../../lib/jquery',
-  'amd!../../../lib/underscore',
-  '../../../lib/Base',
-  '../../../Logger',
-  '../models/SelectionTree'
-], function ($, _, Base, Logger, SelectionTree) {
+  'cdf/lib/jquery',
+  'amd!cdf/lib/underscore',
+  'cdf/lib/Base',
+  '../core/Model'
+], function ($, _, Base, Model) {
 
-  return  Base.extend(Logger).extend(/** @lends cdf.components.filter.strategies.AbstractSelect# */{
-    /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.SelectionStrategies.AbstractSelect',
+  'use strict';
 
+  var SelectionStates = Model.SelectionStates;
+
+  /**
+   * Controller-like set of classes design to encapsulate the selection strategy
+   * and isolate that "business" logic from lower-level view interaction logic.
+   *
+   * These classes are singletons passed as part of the configuration objects.
+   */
+
+  return Base.extend(/** @lends cdf.components.filter.strategies.AbstractSelect# */{
     /**
      * @constructs
      * @extends {@link http://dean.edwards.name/weblog/2006/03/base/|Base}
-     * @extends cdf.Logger
      * @amd cdf/components/filter/strategies/AbstractSelect
      * @classdesc Base class for handling the selection logic, for instance:
      *   <ul>
@@ -40,9 +41,6 @@ define([
      *   </ul>
      * @ignore
      */
-    constructor: function (options) {
-      return this.isLogicGlobal = true;
-    },
 
     /**
      * Calculates the new state of an item, after the user clicked on it.
@@ -52,35 +50,26 @@ define([
      */
     getNewState: function (oldState) {
       switch (oldState) {
-        case SelectionTree.SelectionStates.NONE:
-          return SelectionTree.SelectionStates.ALL;
-        case SelectionTree.SelectionStates.ALL:
-          return SelectionTree.SelectionStates.NONE;
-        case SelectionTree.SelectionStates.SOME:
-          return SelectionTree.SelectionStates.NONE;
+        case SelectionStates.NONE:
+          return SelectionStates.ALL;
+        case SelectionStates.ALL:
+          return SelectionStates.NONE;
+        case SelectionStates.INCLUDE:
+          return SelectionStates.NONE;
+        case SelectionStates.EXCLUDE:
+          return SelectionStates.ALL;
       }
     },
 
     /**
-     * Infers the state of a node, based on the current state of its children.
+     * Gets the selected models.
      *
-     * @param {SelectionStates[]} childrenStates an array containing the state of each child
-     * @return {SelectionStates} Returns the inferred state
+     * @param {object} model The target model.
+     * @param {string} [field="id"] The field that will be used to identify the selected item .
+     * @return {object[]} The list of selected items.
      */
-    inferSelectionFromChildren: function (childrenStates) {
-      var all = _.every(childrenStates, function (el) {
-        return el === SelectionStates.ALL;
-      });
-      var none = _.every(childrenStates, function (el) {
-        return el === SelectionStates.NONE;
-      });
-      if (all) {
-        return SelectionStates.ALL;
-      } else if (none) {
-        return SelectionStates.NONE;
-      } else {
-        return SelectionStates.SOME;
-      }
+    getSelectedItems: function (model, field) {
+      return model.getSelectedItems(field);
     },
 
     /**
@@ -93,6 +82,12 @@ define([
       throw new Error("NotImplemented");
     },
 
+    selectOnlyThis: function (model) {
+      model.root().setAndUpdateSelection(SelectionStates.NONE);
+      this.setSelection(SelectionStates.ALL, model);
+    },
+
+
     /**
      * Perform operations on the model, associated with the user clicking on an item.
      *
@@ -100,37 +95,69 @@ define([
      * @return {this}
      */
     changeSelection: function (model) {
-      var d = $.now();
       var newState = this.getNewState(model.getSelection());
-      newState = this.setSelection(newState, model);
-      var that = this;
-      _.delay(function () {
-        return that.debug("Switching " + (model.get('label')) + " to " + newState + " took " + ($.now() - d) + " ms ");
-      }, 0);
-      return this;
+      this.setSelection(newState, model);
     },
 
     /**
-     * Perform operations on the model, associated with commiting the current selection.
+     * Perform operations on the model, associated with committing the current selection.
      *
      * @param {object} model
      * @return {this}
      */
     applySelection: function (model) {
       model.updateSelectedItems();
-      model.root().set('isCollapsed', true);
-      return this;
+      model.root().set({
+        'isCollapsed': true,
+        'searchPattern': ''
+      });
     },
 
     /**
-     * Gets the selected items. Default behaviour is do defer to the model's one.
+     * Resets the model to previous selection state.
      *
-     * @param {object} model The target model.
-     * @param {object} field
-     * @return {*} The return value of executing the model object _getSelectedItems_ function.
+     * @param {object} model
+     * @return {this}
      */
-    getSelectedItems: function (model, field) {
-      return model.getSelectedItems(field);
+    cancelSelection: function(model){
+      model.restoreSelectedItems();
+      model.root().set('isCollapsed', true);
+    },
+
+    clickOutside: function(model) {
+      model.root().set('isCollapsed', true);
+    },
+
+    filter: function(model, text){
+      model.root().filterBy(text);
+    },
+
+    toggleCollapse: function(model) {
+      var willBeCollapsed;
+
+      if (model.get('isDisabled') === true) {
+        willBeCollapsed = true;
+      } else {
+        var isCollapsed = model.get('isCollapsed');
+        willBeCollapsed = !isCollapsed;
+
+        if (isCollapsed) {
+          var hasVisibleNode = model.walkDown(function(m) {
+            return m.getVisibility();
+          }, _.some);
+          if (!hasVisibleNode) {
+            this.filter(model, '');
+          }
+        }
+
+      }
+      model.set('isCollapsed', willBeCollapsed);
+    },
+
+    mouseOver: function(model, event) {
+    },
+
+    mouseOut: function(model, event) {
     }
   });
 

@@ -12,26 +12,36 @@
  */
 
 define([
-  './Parent'
-], function (ParentView) {
+  'cdf/lib/jquery',
+  'amd!cdf/lib/underscore',
+  './_register',
+  './sortByProperty'
+], function($, _, registerAddIn, sortByProperty) {
 
-  "use strict";
+  'use strict';
 
-  /**
-   * @class cdf.components.filter.views.Group
-   * @amd cdf/components/filter/views/Group
-   * @extends cdf.components.filter.views.Parent
-   * @classdesc View for groups of items.
-   * @ignore
+  /*
+   * Sorts items/groups by value
    */
-  return ParentView.extend(/** @lends cdf.components.filter.views.Group# */{
-    /**
-     * View type.
-     *
-     * @const
-     * @type {string}
-     */
-    type: 'Group'
+  var sortByValue = $.extend(true, {}, sortByProperty, {
+    name: 'sortByValue',
+    label: 'Sort items by value',
+    defaults: {
+      ascending: false,
+      property: 'value',
+      comparer: function(left, right){
+        var l = Number(left);
+        var r = Number(right);
+        if (l === r) {
+          return 0;
+        }
+        return l < r ? -1 : 1;
+      }
+    }
   });
 
+  registerAddIn('sortItem', sortByValue);
+  registerAddIn('sortGroup', sortByValue);
+
+  return sortByValue;
 });

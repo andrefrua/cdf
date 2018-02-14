@@ -20,6 +20,9 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+define(['amd!cdf/lib/backbone', 'amd!cdf/lib/underscore'], function(Backbone, _) {
+
 (function() {
 
 	var ArrMethods = {
@@ -33,21 +36,37 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	};
 	var wrapArray = function(array) { return _.extend(array, ArrMethods); };
 
-	var TreeModel = Backbone.TreeModel = Backbone.Model.extend({
+	var TreeCollection = Backbone.TreeCollection = Backbone.Collection.extend({
+		where: function(attrs, opts) {
+			if(opts && opts.deep) {
+				var nodes = [];
+				this.each(function(model) {
+					nodes = nodes.concat(model.where(attrs));
+				});
+				return wrapArray(nodes);
+			} else {
+				return Backbone.Collection.prototype.where.apply(this, arguments);
+			}
+		}
+	});
+
+	Backbone.TreeModel = Backbone.Model.extend({
 		nodesAttribute: 'nodes',
-		constructor: function tree(node) {
-			Backbone.Model.prototype.constructor.apply(this, arguments);
-			// Don't let the TreeCollection assume that it knows what model it should use.
-			// We may be utilizing an extended TreeModel here.
-			this._nodes = new TreeCollection(undefined, {
+		Collection: TreeCollection,
+		constructor: function tree(node, options) {
+			var attrs = _.omit(node, this.nodesAttribute);
+			Backbone.Model.prototype.constructor.call(this, attrs, options);
+
+			this._nodes = new this.Collection(null, {
 				model: this.constructor
 			});
 			this._nodes.parent = this;
-		    if(node && node[this.nodesAttribute]){
-			this.add(node[this.nodesAttribute]);
-			this.unset(this.nodesAttribute);
-		    }
+			// Don't let the TreeCollection assume that it knows what model it should use.
+			// We may be utilizing an extended TreeModel here.
 
+			if (node && node[this.nodesAttribute]) {
+				this.add(node[this.nodesAttribute]);
+			}
 
 			//Pass the events to the root node.
 			this._nodes.on("all", function(event, model, collection, options) {
@@ -58,8 +77,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		/**
 		 * returns JSON object representing tree, account for branch changes
 		 */
-		toJSON: function() {
+		toJSON: function(excludeChildren) {
 			var jsonObj = Backbone.Model.prototype.toJSON.apply(this, arguments);
+			if(excludeChildren) return jsonObj;
 			var children = this._nodes.toJSON();
 			if(children.length) jsonObj[this.nodesAttribute] = children;
 			return jsonObj;
@@ -252,17 +272,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		}
 	});
 
-	var TreeCollection = Backbone.TreeCollection = Backbone.Collection.extend({
-		where: function(attrs, opts) {
-			if(opts && opts.deep) {
-				var nodes = [];
-				this.each(function(model) {
-					nodes = nodes.concat(model.where(attrs));
-				});
-				return wrapArray(nodes);
-			} else {
-				return Backbone.Collection.prototype.where.apply(this, arguments);
-			}
-		}
-	});
+
+
 }).call(this);
+ return Backbone;
+});

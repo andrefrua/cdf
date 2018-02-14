@@ -12,26 +12,15 @@
  */
 
 define([
-  './Parent'
-], function (ParentView) {
-
-  "use strict";
-
-  /**
-   * @class cdf.components.filter.views.Group
-   * @amd cdf/components/filter/views/Group
-   * @extends cdf.components.filter.views.Parent
-   * @classdesc View for groups of items.
-   * @ignore
-   */
-  return ParentView.extend(/** @lends cdf.components.filter.views.Group# */{
-    /**
-     * View type.
-     *
-     * @const
-     * @type {string}
-     */
-    type: 'Group'
-  });
-
-});
+  "./addIns/accordion",
+  "./addIns/insertionOrder",
+  "./addIns/notificationSelectionLimit",
+  "./addIns/randomColor",
+  "./addIns/selectedOnTop",
+  "./addIns/sortByProperty",
+  "./addIns/sortByLabel",
+  "./addIns/sortByValue",
+  "./addIns/sumSelected",
+  "./addIns/sumValues",
+  "./addIns/template"
+], function() {});
