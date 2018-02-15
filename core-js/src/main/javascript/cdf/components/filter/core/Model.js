@@ -14,7 +14,7 @@
 define([
   'amd!cdf/lib/underscore',
   '../../../lib/baseSelectionTree/BaseSelectionTree'
-], function( _, BaseSelectionTree ) {
+], function(_, BaseSelectionTree) {
 
   'use strict';
 
@@ -40,7 +40,7 @@ define([
      * @property {number}  numberOfItems         The default number of items.
      * @property {number}  page                  The default page.
      */
-    defaults: function(){
+    defaults: function() {
       var defaults = this.base();
 
       defaults.isCollapsed = false;
@@ -71,6 +71,14 @@ define([
      */
     isBusy: function() {
       return this.root().get('isBusy') || false;
+    },
+
+    /**
+     * Triggers the update event after the selection is changed
+     */
+    update: function() {
+      this.base();
+      this.trigger("updateSelectedItems", this);
     }
   }, {
     SelectionStates: BaseSelectionTree.SelectionStates

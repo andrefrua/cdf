@@ -12,10 +12,13 @@
  */
 
 define([
-  './Abstract'
-], function (AbstractView) {
+  './Abstract',
+  '../core/Model'
+], function(AbstractView, Model) {
 
   "use strict";
+
+  var SelectionStates = Model.SelectionStates;
 
   /**
    * @class cdf.components.filter.views.Item
@@ -31,7 +34,20 @@ define([
      * @const
      * @type {string}
      */
-    type: 'Item'
+    type: 'Item',
+
+    /**
+     * Sets the Item viewModel with the necessary information
+     *
+     * @return {Object} The viewModel object.
+     */
+    getViewModel: function() {
+      var viewModel = this.base();
+
+      viewModel.isItemSelected = this.model.getSelection() !== SelectionStates.NONE;
+
+      return viewModel;
+    }
   });
 
 });

@@ -14,10 +14,13 @@
 define([
   'cdf/lib/jquery',
   'amd!cdf/lib/underscore',
-  './Parent'
-], function ($, _, ParentView) {
+  './Parent',
+  '../core/Model'
+], function($, _, ParentView, Model) {
 
   "use strict";
+
+  var SelectionStates = Model.SelectionStates;
 
   /**
    * @class cdf.components.filter.views.Root
@@ -36,7 +39,7 @@ define([
      */
     type: 'Root',
 
-    getViewModel: function () {
+    getViewModel: function() {
       var viewModel = this.base();
 
       var model = this.model;
@@ -44,8 +47,20 @@ define([
         return model.hasChanged();
       });
 
+      // Sets the viewModel with the isItemSelected information
+      var childrenViewModels = null;
+      var children = this.model.children();
+      if (children) {
+        childrenViewModels = children.map(function(childModel) {
+          var childViewModel = childModel.toJSON();
+          childViewModel.isItemSelected = childModel.getSelection() !== SelectionStates.NONE;
+          return childViewModel;
+        });
+      }
+
       return _.extend(viewModel, {
-        hasChanged: hasChanged
+        hasChanged: hasChanged,
+        children: childrenViewModels
       });
     }
 
